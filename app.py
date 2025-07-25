@@ -1,31 +1,19 @@
 from flask import Flask, request, jsonify
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
-from google_auth_oauthlib.flow import InstalledAppFlow
-from google.auth.transport.requests import Request
-from google.oauth2.credentials import Credentials
+from google.oauth2 import service_account
 import os
+import json
 import re
 
 app = Flask(__name__)
 
 SCOPES = ['https://www.googleapis.com/auth/drive']
-CLIENT_SECRET_FILE = 'client_secret_379893520226-1hla1a0tgqp21aavuircrftmemrrc9lo.apps.googleusercontent.com.json'
-TOKEN_FILE = 'token.json'
 
-
+# ✅ Use GOOGLE_CREDS env var for service account auth
 def get_drive_service():
-    creds = None
-    if os.path.exists(TOKEN_FILE):
-        creds = Credentials.from_authorized_user_file(TOKEN_FILE, SCOPES)
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            flow = InstalledAppFlow.from_client_secrets_file(CLIENT_SECRET_FILE, SCOPES)
-            creds = flow.run_local_server(port=0)
-        with open(TOKEN_FILE, 'w') as token:
-            token.write(creds.to_json())
+    info = json.loads(os.environ["GOOGLE_CREDS"])
+    creds = service_account.Credentials.from_service_account_info(info, scopes=SCOPES)
     return build('drive', 'v3', credentials=creds)
 
 
@@ -105,5 +93,6 @@ def clone_endpoint():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
-#if __name__ == "__main__":
-   # app.run(host="0.0.0.0", port=5000)
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 8080))
+    app.run(host="0.0.0.0", port=port)
