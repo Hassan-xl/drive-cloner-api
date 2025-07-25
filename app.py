@@ -10,9 +10,9 @@ app = Flask(__name__)
 
 SCOPES = ['https://www.googleapis.com/auth/drive']
 
-# ✅ Use GOOGLE_CREDS env var for service account auth
+# ✅ Load service account credentials from Railway environment variable
 def get_drive_service():
-    info = json.loads(os.environ["GOOGLE_CREDS"])
+    info = json.loads(os.environ["GOOGLE_SERVICE_ACCOUNT_JSON"])
     creds = service_account.Credentials.from_service_account_info(info, scopes=SCOPES)
     return build('drive', 'v3', credentials=creds)
 
@@ -96,3 +96,4 @@ def clone_endpoint():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 8080))
     app.run(host="0.0.0.0", port=port)
+
